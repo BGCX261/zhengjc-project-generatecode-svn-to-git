@@ -1,0 +1,29 @@
+*&---------------------------------------------------------------------*
+*&  ProjectName:高意科技SAP
+*&  Package:    ZCMNCLS0002
+*&  ClassName:  REPORT_CLS_INF
+*&  Author:     郑建诚
+*&  Email：     jiancheng.zheng@photoptech.com
+*&  CreateDate: 2013-07-01
+*&  Description:接口定义用类用于REPORT中
+*&---------------------------------------------------------------------*
+*& Version        Date         Author            Description
+*&---------------------------------------------------------------------*
+*&  V1.00         2013-07-01  郑建诚             Creat
+*&
+*&---------------------------------------------------------------------*
+
+
+*&---------------------------------------------------------------------*
+*&  ClassName:  REPORT_CLS_INF
+*&  Author:     郑建诚
+*&  Email：     jiancheng.zheng@photoptech.com
+*&  CreateDate: 2013-07-01
+*&  Description:接口定义用类用于REPORT中
+*&---------------------------------------------------------------------*\
+INTERFACE report_cls_inf.
+  "取数行为
+  METHODS: databehavior.
+  "展示行为
+  METHODS: showbehavior.
+ENDINTERFACE.                    "report_cls_inf

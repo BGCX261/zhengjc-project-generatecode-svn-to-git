@@ -1,0 +1,349 @@
+*&---------------------------------------------------------------------*
+*&  ProjectName:高意科技SAP
+*&  Package:    ZCMNCLS0001
+*&  ClassName:  REPORT_CLS_ABS
+*&  Author:     郑建诚
+*&  Email：     jiancheng.zheng@photoptech.com
+*&  CreateDate: 2013-05-07
+*&  Description:抽象通用类用于REPORT中
+*&---------------------------------------------------------------------*
+*& Version        Date         Author            Description
+*&---------------------------------------------------------------------*
+*&  V1.00         2013-05-07  郑建诚             Creat
+*&
+*&  V1.01         2013-05-30  郑建诚             修改备注风格
+*&
+*&  V1.02         2013-06-04  郑建诚             新增返回选择界面用：
+*&                                                1、异常做跳转~
+*&                                                2、LEAVE TO CURRENT TRANSACTION.
+*&                                                为了开发方便目前选择使用1做异常处理跳转到选择界面
+*&
+*&  V1.10         2013-07-01  郑建诚             新增多人开发功能：开发人员只要分别开发新建一个所要开发的接口类,appendinf到对象列表中
+*&                                              接口：report_cls_inf 里面有两个方法：databehavior、 showbehavior.分别用实现数据获取，数据展示
+*&                                              接口文件：zcmncls0002
+*&
+*&---------------------------------------------------------------------*
+INCLUDE zcmntop.
+INCLUDE zcmn0001.
+INCLUDE zcmncls0002.
+
+"ALV显示的outtab表数据
+FIELD-SYMBOLS:<t_outtab> TYPE STANDARD TABLE.
+"alv表的表头信息
+DATA: alv_head TYPE string,
+      html_height_top TYPE i.
+
+"ALV要显示的字段信息表
+DATA: gt_fieldcat TYPE TABLE OF slis_fieldcat_alv,
+      wa_fieldcat TYPE slis_fieldcat_alv.
+DATA: lwa_layout TYPE slis_layout_alv.
+"定义col_pos 列位数
+DATA: col_pos TYPE i VALUE 0.
+
+*&---------------------------------------------------------------------*
+*&  ClassName:  REPORT_CLS_ABS
+*&  Author:     郑建诚
+*&  Email：     jiancheng.zheng@photoptech.com
+*&  CreateDate: 2013-05-07
+*&  Description:抽象通用类实现用于REPORT中
+*&---------------------------------------------------------------------*
+CLASS report_cls_abs DEFINITION ABSTRACT.
+*===============Public 部分===============*
+  PUBLIC SECTION.
+*    "ALV要显示的字段信息表
+*    DATA: gt_fieldcat TYPE TABLE OF slis_fieldcat_alv,
+*          wa_fieldcat TYPE slis_fieldcat_alv.
+*    DATA: lwa_layout TYPE slis_layout_alv.
+*
+*    "定义col_pos 列位数
+*    DATA: col_pos TYPE i VALUE 0.
+
+*------定义构造方法------
+    METHODS:
+      constructor,          "构造函数
+      init,                 "第二屏幕出现前的相关方法 初始化相关信息
+      startselection,       "第二屏幕出现前开始的方法
+      execute RAISING cx_sy_zerodivide,              "运行的显示等相关入口程序
+      infgetdata,              "获取接口的取数数据
+      infshowdata,             "展示接口的取数数据
+*------定义可重载方法------
+      display,              "展示信息
+      specify RAISING cx_sy_zerodivide,   "数据获取后做提前判断
+*------定义抽象方法------
+      auth      ABSTRACT,   "权限验证
+      gtdata    ABSTRACT,   "获取主数据信息
+      fidcat    ABSTRACT.   "处理表头
+*------SET GET方法------
+    METHODS:
+      setis_show_nodata IMPORTING is_show TYPE char1,         "设置如果没有数据是否显示ALV列表还是提示后跳回选择界面
+      appendinf IMPORTING cls_inf TYPE REF TO report_cls_inf. "新增接口对象
+
+*===============Private 部分===============*
+  PRIVATE SECTION.
+*------定义private变量------
+    "主数据为空的时候是否显示没有数据 跳会到选择屏幕
+    DATA:is_show_nodata TYPE char1 VALUE 'X'.
+    "定义接口对象列表
+    DATA:gr_inf_list TYPE TABLE OF REF TO report_cls_inf,
+         wr_inf TYPE REF TO report_cls_inf.
+
+ENDCLASS.                    "REPORT_CLS_ABS DEFINITION
+
+
+
+*&---------------------------------------------------------------------*
+*&  ClassName:  REPORT_CLS_ABS
+*&  Author:     郑建诚
+*&  Email：     jiancheng.zheng@photoptech.com
+*&  CreateDate: 2013-05-07
+*&  Description:抽象通用类实现用于REPORT中
+*&---------------------------------------------------------------------*
+CLASS report_cls_abs IMPLEMENTATION.
+
+*&---------------------------------------------------------------------*
+*&  Title:构造函数
+*&  MethodName:CONSTRUCTOR
+*&  Description:初始化类
+*&  param:
+*&  return:
+*&  throws:
+*&---------------------------------------------------------------------*
+  METHOD constructor.
+    CLEAR:wa_fieldcat,gt_fieldcat[].
+    col_pos = 0.
+    DEFINE fill_fieldcat.
+      add 1 to col_pos.
+      move:
+        col_pos   to    wa_fieldcat-col_pos,
+        &1        to    wa_fieldcat-fieldname,
+*        &2        to    wa_fieldcat-tabname,
+        &2        to    wa_fieldcat-checkbox,
+        &3        to    wa_fieldcat-seltext_l,
+        &4        to    wa_fieldcat-ref_fieldname,
+        &5        to    wa_fieldcat-ref_tabname,
+        &6        to    wa_fieldcat-do_sum,
+*        &7        to    gt_fieldcat-just,
+        &7        to    wa_fieldcat-edit,
+        &8        to    wa_fieldcat-no_zero,
+        &9        to    wa_fieldcat-no_out.
+      append wa_fieldcat to gt_fieldcat[].
+      clear wa_fieldcat.
+    END-OF-DEFINITION.
+
+    "初始化接口对象列表
+    CLEAR:gr_inf_list,gr_inf_list[],wr_inf.
+  ENDMETHOD.                    "CONSTRUCTOR
+
+
+*&---------------------------------------------------------------------*
+*&  Title:第二屏幕出现前的相关方法
+*&  MethodName:INIT
+*&  Description:第二屏幕出现前的相关方法
+*&  param:
+*&  return:
+*&  throws:
+*&---------------------------------------------------------------------*
+  METHOD init.
+    "权限验证
+    CALL METHOD me->auth.
+
+  ENDMETHOD.                    "INIT
+
+*&---------------------------------------------------------------------*
+*&  Title:第二屏幕出现前开始的方法
+*&  MethodName:
+*&  Description:第二屏幕出现前的相关方法
+*&  param:
+*&  return:
+*&  throws:
+*&---------------------------------------------------------------------*
+  METHOD startselection.
+    "程序监控公用函数
+    PERFORM frm_follow.
+    "获取主数据信息
+    CALL METHOD me->gtdata.
+    "获取接口取数逻辑
+    CALL METHOD me->infgetdata.
+  ENDMETHOD.                    "STARTSELECTION
+
+
+*&---------------------------------------------------------------------*
+*&  Title:运行的显示等相关入口程序
+*&  MethodName:EXECUTE
+*&  Description:入口函数
+*&  param:
+*&  return:
+*&  throws:
+*&---------------------------------------------------------------------*
+  METHOD execute.
+    "调用子程序：数据提前判断
+    CALL METHOD me->specify.
+    "调用子程序：处理表头
+    CALL METHOD me->fidcat.
+    "调用子程序：接口要展示的数据
+    CALL METHOD me->infshowdata.
+    "调用子程序：数据展示
+    CALL METHOD me->display.
+
+
+
+  ENDMETHOD.                    "EXECUTE
+
+
+*&---------------------------------------------------------------------*
+*&  Title:ALV展示
+*&  MethodName:DISPLAY.
+*&  Description:入口函数
+*&  param:
+*&  return:
+*&  throws:
+*&---------------------------------------------------------------------*
+  METHOD display.
+*    DATA: lwa_layout TYPE slis_layout_alv.
+    "排序不做单元格合并
+*  lwa_layout-cell_merge = 'N'.
+    "自动适配长宽
+    lwa_layout-colwidth_optimize = 'X'.
+    IF html_height_top = 0.
+      CALL FUNCTION 'REUSE_ALV_GRID_DISPLAY'
+        EXPORTING
+          it_fieldcat   = gt_fieldcat[]
+          is_layout     = lwa_layout
+        TABLES
+          t_outtab      = <t_outtab>
+        EXCEPTIONS
+          program_error = 1
+          OTHERS        = 2.
+    ELSE.
+      CALL FUNCTION 'REUSE_ALV_GRID_DISPLAY'
+        EXPORTING
+          i_callback_program          = sy-repid
+          i_callback_html_top_of_page = 'ALV_TOP_OF_PAGE' "如果需要表头
+          i_html_height_top           = html_height_top   " 设置抬头宽度
+          it_fieldcat                 = gt_fieldcat[]
+          is_layout                   = lwa_layout
+        TABLES
+          t_outtab                    = <t_outtab>
+        EXCEPTIONS
+          program_error               = 1
+          OTHERS                      = 2.
+    ENDIF.
+  ENDMETHOD.                    "DISPLAY
+
+
+
+
+*&---------------------------------------------------------------------*
+*&  Title:数据获取后做提前判断
+*&  MethodName:SPECIFY
+*&  Description:数据获取后做提前判断方法
+*&  param:
+*&  return:
+*&  throws:
+*&---------------------------------------------------------------------*
+  METHOD specify.
+    DATA result TYPE i.
+    IF is_show_nodata = 'X' AND <t_outtab> IS INITIAL.
+      MESSAGE '没有数据' TYPE 'I'.
+*      LEAVE TO CURRENT TRANSACTION.
+      result = 1 / 0.
+*      RAISE EXCEPTION TYPE CX_SY_ZERODIVIDE.
+    ENDIF.
+  ENDMETHOD.                    "SPECIFY
+
+
+*===============SET GET 的相关方法===============*
+
+*&---------------------------------------------------------------------*
+*&  Title:设置是否在没有主数据的情况下显示
+*&  MethodName:SETIS_SHOW_NODATA
+*&  Description:设置是否在没有主数据的情况下显示
+*&  param:
+*&  return:
+*&  throws:
+*&---------------------------------------------------------------------*
+  METHOD setis_show_nodata.
+    is_show_nodata = is_show.
+  ENDMETHOD.                    "SETIS_SHOW_NODATA
+
+
+
+*&---------------------------------------------------------------------*
+*&  Title:新增接口对象
+*&  MethodName:APPENDINF
+*&  Description:新增接口对象
+*&  param:
+*&  return:
+*&  throws:
+*&---------------------------------------------------------------------*
+  METHOD appendinf.
+    APPEND cls_inf TO gr_inf_list.
+  ENDMETHOD.                    "appendinf
+
+
+*&---------------------------------------------------------------------*
+*&  Title:获取接口的取数数据
+*&  MethodName:infgetdata
+*&  Description:获取接口的取数数据
+*&  param:
+*&  return:
+*&  throws:
+*&---------------------------------------------------------------------*
+  METHOD infgetdata.
+    CLEAR:wr_inf.
+    LOOP AT gr_inf_list INTO wr_inf.
+      wr_inf->databehavior( ).
+    ENDLOOP.
+  ENDMETHOD.                    "infgetdata
+
+
+*&---------------------------------------------------------------------*
+*&  Title:展示接口的取数数据
+*&  MethodName:infshowdata
+*&  Description:展示接口的取数数据
+*&  param:
+*&  return:
+*&  throws:
+*&---------------------------------------------------------------------*
+  METHOD infshowdata.
+    CLEAR:wr_inf.
+    LOOP AT gr_inf_list INTO wr_inf.
+      wr_inf->showbehavior( ).
+    ENDLOOP.
+  ENDMETHOD.                    "infshowdata
+
+
+
+
+
+
+ENDCLASS.                    "report_cls_abs IMPLEMENTATION
+
+
+
+*===============通用的FORM===============*
+
+*&---------------------------------------------------------------------*
+*&      Form  alv_top_of_page
+*&---------------------------------------------------------------------*
+*       ALV的表头
+*----------------------------------------------------------------------*
+*      -->CL_DD      text
+*----------------------------------------------------------------------*
+FORM alv_top_of_page USING cl_dd TYPE REF TO cl_dd_document.
+  DATA: m_p TYPE i.
+  DATA: m_buff TYPE string.
+  IF alv_head IS NOT INITIAL.
+    m_buff = alv_head.
+  ELSE.
+    CONCATENATE '<HTML><CENTER><H4>表头标题</H4></CENTER></HTML>'  '' INTO m_buff.
+  ENDIF.
+
+  CALL METHOD cl_dd->html_insert
+    EXPORTING
+      contents = m_buff
+    CHANGING
+      position = m_p.
+
+
+ENDFORM.                    "alv_top_of_page

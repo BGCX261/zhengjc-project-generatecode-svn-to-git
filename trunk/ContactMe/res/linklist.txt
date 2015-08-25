@@ -1,0 +1,16 @@
+﻿集团管理部|ABAP开发组|郑建诚|88358212|8212||18906916683|jiancheng.zheng@photoptech.com|abap开发人员|0
+集团管理部|ABAP开发组|胡秀华|88358212|8212||18906916683|jiancheng.zheng@photoptech.com|abap开发人员|0
+集团管理部|ABAP开发组|林志华|88358212|8212||18906916683|jiancheng.zheng@photoptech.com|abap开发人员|0
+集团管理部|JAVA开发组|林升|88358212|8212||18906916680|joey.lin@photoptech.com|abap开发人员|0
+集团管理部|JAVA开发组|陈镔|88358212|8212||18906916680|joey.lin@photoptech.com|abap开发人员|0
+集团管理部|JAVA开发组|彭积宁|88358212|8212||18906916680|joey.lin@photoptech.com|abap开发人员|0
+集团管理部|ABAP开发组|皮菊英|88358212|8212||18906916683|jiancheng.zheng@photoptech.com|abap开发人员|0
+集团管理部|财务部|张林|88358212|8212||18906916683|jiancheng.zheng@photoptech.com|abap开发人员|0
+集团管理部|JAVA开发组|陈宇明|88358212|8212||18906916680|joey.lin@photoptech.com|abap开发人员|0
+集团管理部|JAVA开发组|陈详|88358212|8212||18906916680|joey.lin@photoptech.com|abap开发人员|0
+集团管理部|JAVA开发组|陈建华|88358212|8212||18906916680|joey.lin@photoptech.com|abap开发人员|0
+集团管理部|JAVA开发组|胡建华|88358212|8212||18906916680|joey.lin@photoptech.com|abap开发人员|0
+集团管理部|ABAP开发组|曾详生|88358212|8212||18906916683|jiancheng.zheng@photoptech.com|abap开发人员|0
+集团管理部|ABAP开发组|黄雄芬|88358212|8212||18906916683|jiancheng.zheng@photoptech.com|abap开发人员|0
+集团管理部|ABAP开发组|饶显忠|88358212|8212||18906916683|jiancheng.zheng@photoptech.com|abap开发人员|0
+K2|销售组|赵娟|88358312|8312||18906913380|jeans.zhao@photoptech.com|SD销售人员|0

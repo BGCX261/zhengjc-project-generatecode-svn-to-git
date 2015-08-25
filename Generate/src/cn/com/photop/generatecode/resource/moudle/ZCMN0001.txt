@@ -1,0 +1,353 @@
+*&---------------------------------------------------------------------*
+*&  包含文件              ZCMN0001
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Form  frm_get_domainvalue
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_DOMNAME  text
+*      -->P_KEY      text
+*      -->P_VALUE    text
+*----------------------------------------------------------------------*
+FORM frm_get_domainvalue  USING p_domname p_key CHANGING p_value.
+
+  DATA l_ddtext TYPE dd07v-ddtext.
+  DATA l_domvalue TYPE dd07v-domvalue_l.
+
+  l_domvalue = p_key.
+  CALL FUNCTION 'DOMAIN_VALUE_GET'
+    EXPORTING
+      i_domname  = p_domname
+      i_domvalue = l_domvalue
+    IMPORTING
+      e_ddtext   = l_ddtext
+    EXCEPTIONS
+      not_exist  = 1
+      OTHERS     = 2.
+  IF sy-subrc <> 0.
+    CLEAR p_value.
+  ELSE.
+    p_value = l_ddtext.
+  ENDIF.
+
+ENDFORM.                    "frm_get_domainvalue
+*&---------------------------------------------------------------------*
+*&      Form  frm_popup_filepath
+*&---------------------------------------------------------------------*
+*       F4帮助选择上传文件
+*----------------------------------------------------------------------*
+*      -->P_FILENAME text
+*----------------------------------------------------------------------*
+FORM frm_popup_filepath USING p_filename TYPE rlgrap-filename.
+
+  CALL FUNCTION 'KD_GET_FILENAME_ON_F4'
+    EXPORTING
+      static    = 'X'
+    CHANGING
+      file_name = p_filename.
+
+ENDFORM.                    "frm_popup_filepath
+*&---------------------------------------------------------------------*
+*&      Form  frm_down_path
+*&---------------------------------------------------------------------*
+*       F4 帮助选择文件地址
+*----------------------------------------------------------------------*
+*      -->P_NAME     text
+*----------------------------------------------------------------------*
+FORM frm_down_path CHANGING p_name LIKE rlgrap-filename.
+
+  DATA : l_title TYPE string, " Window Title
+    l_string TYPE string. "File path string
+
+  l_title = 'Search for Download Path'(t04).
+
+  CALL METHOD cl_gui_frontend_services=>directory_browse
+    EXPORTING
+      window_title    = l_title
+      initial_folder  = 'D:\'
+    CHANGING
+      selected_folder = l_string
+    EXCEPTIONS
+      cntl_error      = 1
+      error_no_gui    = 2
+      OTHERS          = 3.
+  p_name = l_string.
+
+
+ENDFORM.                    "frm_down_path
+*&---------------------------------------------------------------------*
+*&      Form  FRM_GET_MEINS
+*&---------------------------------------------------------------------*
+*       转换单位显示
+*----------------------------------------------------------------------*
+*      <--P_GT_DATA_MEINS  text
+*----------------------------------------------------------------------*
+FORM frm_get_meins USING p_langu  p_ret_type
+                    CHANGING p_meins.
+
+  DATA: l_input TYPE char20,
+        l_output TYPE char20,
+        l_long TYPE char20,
+        l_short TYPE char20,
+        l_langu TYPE  sy-langu.
+
+  l_input = p_meins.
+
+  IF p_langu IS INITIAL.
+    l_langu = sy-langu.
+  ELSE.
+    l_langu = p_langu.
+  ENDIF.
+
+  CALL FUNCTION 'CONVERSION_EXIT_CUNIT_OUTPUT'
+    EXPORTING
+      input          = l_input
+      language       = l_langu
+    IMPORTING
+      long_text      = l_long
+      output         = l_output
+      short_text     = l_short
+    EXCEPTIONS
+      unit_not_found = 1
+      OTHERS         = 2.
+  IF sy-subrc = 0.
+    CASE p_ret_type.
+      WHEN 'C'.
+        p_meins = l_output.  "返回单位转换
+      WHEN 'L'.
+        p_meins = l_long.    "返回长文本
+      WHEN 'S'.
+        p_meins = l_short.   "返回短文本
+    ENDCASE.
+  ENDIF.
+
+ENDFORM.          " FRM_GET_MEINS
+*&---------------------------------------------------------------------*
+*&      Form  frm_DELET_zero
+*&---------------------------------------------------------------------*
+*       去除前面的0
+*----------------------------------------------------------------------*
+*      -->P_IN       text
+*      -->P_OUT      text
+*----------------------------------------------------------------------*
+FORM frm_delet_zero USING p_in  p_out.
+
+  CALL FUNCTION 'CONVERSION_EXIT_ALPHA_OUTPUT'
+    EXPORTING
+      input  = p_in
+    IMPORTING
+      output = p_out.
+
+ENDFORM.                    "frm_DELET_zero
+*&---------------------------------------------------------------------*
+*&      Form  FRM_ADD_ZERO
+*&---------------------------------------------------------------------*
+*       前面补零
+*----------------------------------------------------------------------*
+*      -->P_IN       text
+*      -->P_OUT      text
+*----------------------------------------------------------------------*
+FORM frm_add_zero USING p_in  p_out.
+
+  CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+    EXPORTING
+      input  = p_in
+    IMPORTING
+      output = p_out.
+
+ENDFORM.                    "FRM_ADD_ZERO
+*&---------------------------------------------------------------------*
+*&      Form  FRM_FOLLOW
+*&---------------------------------------------------------------------*
+*       跟踪子程序
+*----------------------------------------------------------------------*
+FORM frm_follow.
+
+
+ENDFORM.                    "FRM_FOLLOW
+
+
+*&---------------------------------------------------------------------*
+*&      Form  FRM_FOLLOW
+*&---------------------------------------------------------------------*
+*       根据工厂取公司名称和地址
+*----------------------------------------------------------------------*
+FORM frm_get_bukrs USING p_werks p_langu p_name p_adrc.
+
+  DATA: l_werks   TYPE  t001w-werks,
+        l_name1   TYPE  adrc-name1,
+        l_name2   TYPE  adrc-name2,
+        l_name3   TYPE  adrc-name3,
+        l_name4   TYPE  adrc-name4,
+        l_str1    TYPE  adrc-str_suppl1,
+        l_str2    TYPE  adrc-str_suppl2,
+        l_str3    TYPE  adrc-str_suppl3,
+        location  TYPE  adrc-location,
+        l_langu TYPE  sy-langu.
+
+  l_werks = p_werks.
+
+  SELECT SINGLE
+      adrc~name1
+      adrc~name2
+      adrc~name3
+      adrc~name4
+      adrc~str_suppl1
+      adrc~str_suppl2
+      adrc~str_suppl3
+      adrc~location
+      INTO (l_name1,l_name2,l_name3,l_name4,l_str1,l_str2,l_str3,location)
+    FROM adrc
+    INNER JOIN t001
+    ON adrc~addrnumber = t001~adrnr
+    INNER JOIN t001k
+    ON t001~bukrs = t001k~bukrs
+    INNER JOIN t001w
+    ON t001k~bwkey = t001w~bwkey
+    WHERE t001w~werks = l_werks.
+
+  IF p_langu IS INITIAL.
+    l_langu = sy-langu.
+  ELSE.
+    l_langu = p_langu.
+  ENDIF.
+
+
+  IF sy-subrc = 0.
+    IF l_langu = '1' .
+      CONCATENATE l_name3 l_name4 INTO p_name.
+      CONCATENATE l_str3 location INTO p_adrc.
+      CONDENSE:p_name,p_adrc.
+    ELSE.
+      CONCATENATE l_name1 l_name2 INTO p_name.
+      CONCATENATE l_str1 l_str2 INTO p_adrc.
+      CONDENSE:p_name,p_adrc.
+    ENDIF.
+  ENDIF.
+
+ENDFORM.                    "FRM_GET_BUKRS
+
+*&---------------------------------------------------------------------*
+*&      Form  frm_get_addr
+*&---------------------------------------------------------------------*
+*       地址编码取客户名称，地址
+*  中国地区（CN） 名称=name2 否则取name3+name4
+*  地址：中国：地区（XX省）+ 城市 + 街道1 & 街道2 +“空格+空格”
+*             +“邮政编码：”+邮编代码
+*        国外： 街道1 & 街道2 +“空格” + 城市 +“空格”
+*               + 地区/省（英文描述）+“空格” +国家（英文描述）
+*               + “空格+空格 Zip:+空格 ”+邮政编码
+*----------------------------------------------------------------------*
+*      -->P_ADDRNUMBER  text
+*      -->P_NAME        text
+*      -->P_ADDR        text
+*----------------------------------------------------------------------*
+FORM frm_get_addr USING p_addrnumber p_name p_addr p_country .
+  DATA: wa_adrc TYPE adrc,
+        lt_t005u LIKE STANDARD TABLE OF t005u WITH HEADER LINE,
+        lt_t005t LIKE STANDARD TABLE OF t005t WITH HEADER LINE.
+
+  DATA: l_bezei_cn TYPE t005u-bezei, " 取中文地区描述
+        l_landx_cn TYPE t005t-landx, " 取中文国家描述
+        l_bezei_en TYPE t005u-bezei, " 取英文地区描述
+        l_landx_en TYPE t005t-landx, " 取英文国家描述
+        l_city  TYPE adrc-city1,  " 城市
+        l_street TYPE string, " 街道
+        l_postcode TYPE adrc-post_code1.
+
+  SELECT SINGLE * INTO wa_adrc
+    FROM adrc WHERE addrnumber = p_addrnumber.
+
+  l_bezei_cn = ''.
+  l_landx_cn = ''.
+  l_bezei_en = ''.
+  l_landx_en = ''.
+
+  IF sy-subrc = 0.
+    p_country =  wa_adrc-country.
+    l_city = wa_adrc-city1.
+    CONCATENATE wa_adrc-street wa_adrc-str_suppl1 wa_adrc-str_suppl2
+            INTO l_street.
+    l_postcode = wa_adrc-post_code1.
+
+    " 取地区描述
+    SELECT * INTO TABLE lt_t005u FROM t005u
+     WHERE land1 = wa_adrc-country
+       AND bland = wa_adrc-region.
+
+    LOOP AT lt_t005u.
+      CASE lt_t005u-spras.
+        WHEN '1'.
+          l_bezei_cn = lt_t005u-bezei.
+        WHEN 'E'.
+          l_bezei_en = lt_t005u-bezei.
+        WHEN OTHERS.
+      ENDCASE.
+    ENDLOOP.
+    " 取国家描述
+    SELECT * INTO TABLE lt_t005t  FROM t005t
+     WHERE land1 = wa_adrc-country.
+
+    LOOP AT lt_t005t.
+      CASE lt_t005t-spras.
+        WHEN '1'.
+          l_landx_cn = lt_t005t-landx.
+        WHEN 'E'.
+          l_landx_en = lt_t005t-landx.
+        WHEN OTHERS.
+      ENDCASE.
+    ENDLOOP.
+
+    IF wa_adrc-country = 'CN' AND wa_adrc-name2 IS NOT INITIAL.
+
+      p_name = wa_adrc-name2.
+
+      CONCATENATE l_bezei_cn l_city l_street INTO p_addr.
+      CONCATENATE p_addr '邮政编码：' INTO p_addr SEPARATED BY '  '.
+      CONCATENATE p_addr l_postcode INTO p_addr SEPARATED BY ' '.
+
+    ELSE.
+      CONCATENATE wa_adrc-name3 wa_adrc-name4 INTO p_name.
+
+      CONCATENATE l_street l_city INTO p_addr SEPARATED BY ' '.
+      CONCATENATE p_addr l_bezei_en INTO p_addr SEPARATED BY ' '.
+      CONCATENATE p_addr l_landx_en INTO p_addr SEPARATED BY ' '.
+      CONCATENATE p_addr 'Zip:' INTO p_addr SEPARATED BY '  '.
+      CONCATENATE p_addr l_postcode INTO p_addr SEPARATED BY ' '.
+    ENDIF.
+  ENDIF.
+ENDFORM.                    "frm_get_addr
+*&---------------------------------------------------------------------*
+*&      Form  frm_get_objnr
+*&---------------------------------------------------------------------*
+*       系统生成订单，对象号取‘VB’+ 订单号（10）+‘000000’
+* 自定义订单号，对象号‘VB’+订单号（总10位不足订单号后补空格）+‘000000’
+*----------------------------------------------------------------------*
+*      -->P_ADDRNUMBER  text
+*      -->P_NAME        text
+*      -->P_ADDR        text
+*----------------------------------------------------------------------*
+FORM frm_get_objnr USING p_vbeln p_objnr.
+  DATA: l_str   TYPE char1,
+        l_len   TYPE i,
+        l_vbeln TYPE char30,
+        l_obj   TYPE char40.
+
+  l_str = p_vbeln+0(1).
+  IF l_str <> '0'.
+    l_len = 10 - strlen( p_vbeln ).
+
+    l_vbeln = p_vbeln.
+    DO l_len TIMES.
+      CONCATENATE l_vbeln ' #'INTO l_vbeln.
+    ENDDO.
+
+    CONCATENATE 'VB' l_vbeln '000000' INTO l_obj.
+    REPLACE ALL OCCURRENCES OF '#' IN l_obj WITH ''.
+
+    p_objnr = l_obj.
+  ELSE.
+    CONCATENATE 'VB' p_vbeln '000000' INTO p_objnr.
+  ENDIF.
+ENDFORM.                    "frm_get_objnr

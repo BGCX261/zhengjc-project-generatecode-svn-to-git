@@ -1,0 +1,120 @@
+*&---------------------------------------------------------------------*
+*& Report        #Report#
+*& Author:       #Author#
+*& Email：       #Email#
+*& Date  :       #Date#
+*& Description:  
+*&           			FS编写人员：
+*&           			FS编写人员EMAIL:
+*&          			参考需求说明文档：PHTSAP_FS_*.docxs
+*&          			工作台请求号描述：
+*&---------------------------------------------------------------------*
+*& Version        Date         Author            Description
+*&---------------------------------------------------------------------*
+*& V1.00.00       #Date#    	#Author#          Create
+*&                                                Request NO:
+*&                                                Transport NO:
+*&                                                TCode:
+*&---------------------------------------------------------------------*
+
+
+REPORT  #Report#.
+
+"INCLUDE文件 获取数据的对象
+INCLUDE #Object#.
+
+"引用表
+TABLES: #Tables#.
+
+"定义对象
+DATA:g_cls TYPE REF TO report_cls_abs.
+
+
+*================================选择查询参数VIEW=================================*
+
+SELECTION-SCREEN BEGIN OF BLOCK bk1 WITH FRAME TITLE text-t01.
+#Selection_Screen#
+SELECTION-SCREEN END OF BLOCK bk1.
+
+*=================================================================================*
+INITIALIZATION.
+
+"离开选择屏幕之前触发
+AT SELECTION-SCREEN.
+  "调用子程序：权限判断
+  PERFORM frm_check_auth.
+  "创建自定义的报表对象
+  CREATE OBJECT g_cls TYPE report_cls_act.
+  "初始化报表对象
+  CALL METHOD g_cls->init.
+
+START-OF-SELECTION.
+
+  "处理select-options数据
+  PERFORM frm_do_so.
+
+  "调用子程序：获取数据
+  CALL METHOD g_cls->startselection.
+
+END-OF-SELECTION.
+  TRY .
+      "执行对象相关数据处理逻辑等
+      CALL METHOD g_cls->execute.
+    CATCH cx_sy_zerodivide." INTO ex.
+*      MESSAGE: 'message' TYPE 'I'.
+      "此异常处理用于数据位空的时候跳出整个ALV
+      STOP.
+  ENDTRY.
+
+*=================================================================================*
+
+
+*&---------------------------------------------------------------------*
+*&      Form  FRM_DO_SO
+*&---------------------------------------------------------------------*
+*       处理select-options数据
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM frm_do_so .
+#Do_So#
+ENDFORM.                    " FRM_DO_SO
+
+
+
+*&---------------------------------------------------------------------*
+*&      frm_check_auth
+*&---------------------------------------------------------------------*
+*       判断权限
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM frm_check_auth.
+  "多个类型对象的判断权限
+*  DATA:lt_t001w TYPE TABLE OF t001w WITH HEADER LINE.
+*  SELECT *
+*  INTO TABLE lt_t001w
+*  FROM t001w
+*  WHERE werks IN s_dwerk
+*    .
+*
+*  LOOP AT lt_t001w.
+*    AUTHORITY-CHECK OBJECT 'C_AFKO_AWA'
+*      ID 'WERKS' FIELD lt_t001w-werks
+*      ID 'ACTVT' FIELD '03'
+*      .
+*    IF sy-subrc <> 0.
+*      MESSAGE e059(zmm) WITH lt_t001w-werks.    
+*    ENDIF.
+*  ENDLOOP.
+
+  "单个参数的判断对象类型
+*  AUTHORITY-CHECK OBJECT 'M_MATE_WRK'
+*    ID 'WERKS' FIELD s_werks.
+*  IF  sy-subrc <> 0.
+*    MESSAGE 'No authorization' TYPE 'E'.
+*  ENDIF.
+
+ENDFORM.                    "frm_check_auth 

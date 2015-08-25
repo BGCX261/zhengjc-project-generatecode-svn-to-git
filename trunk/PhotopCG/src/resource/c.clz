@@ -1,0 +1,203 @@
+*&---------------------------------------------------------------------*
+*&  ProjectName:高意科技SAP
+*&  Package:    #Object#
+*&  ClassName:  REPORT_CLS_ACT
+*&  Author:     #Author#
+*&  Email：     #Email#
+*&  CreateDate: #Date#
+*&  Description:实现通用类用于REPORT中模板
+*&---------------------------------------------------------------------*
+*& Version        Date         Author            Description
+*&---------------------------------------------------------------------*
+*&  V1.00         #Date#  	#Author#             Creat
+*&
+*&
+*&
+*&---------------------------------------------------------------------*
+
+
+INCLUDE zcmncls0001.
+
+"定义屏幕逻辑的相关变量
+#Ranges#
+
+"定义获取全局数据类型
+TYPES:BEGIN OF type_data,
+#Type_Data#
+END OF type_data.
+
+
+*&---------------------------------------------------------------------*
+*&  ClassName:  REPORT_CLS_ACT
+*&  Author:     #Author#
+*&  Email：     #Email#
+*&  CreateDate: #Date#
+*&  Description:REPORT通过OO来实现  定义
+*&---------------------------------------------------------------------*
+CLASS report_cls_act DEFINITION INHERITING FROM report_cls_abs.
+
+*===============Public 部分===============*
+  PUBLIC SECTION.
+*------定义private 方法------
+    METHODS:
+*------定义构造方法------
+      constructor,                        "构造函数
+*------实现重写方法------
+*      DISPLAY REDEFINITION,              "展示信息
+
+*------实现抽象方法------
+      auth      REDEFINITION,           "权限验证
+      gtdata    REDEFINITION,           "获取主数据信息
+      fidcat    REDEFINITION.           "处理表头
+
+*===============Private 部分===============*
+  PRIVATE SECTION.
+*------定义private变量------
+    "定义获取要展示的的相关数据
+    DATA:gt_data TYPE TABLE OF type_data,
+         wa_data TYPE type_data.
+
+ENDCLASS.                    "REPORT_CLS_ACT DEFINITION
+
+
+
+*&---------------------------------------------------------------------*
+*&  ClassName:  REPORT_CLS_ACT
+*&  Author:     #Author#
+*&  Email：     #Email#
+*&  CreateDate: #Date#
+*&  Description:REPORT通过OO来实现  实现
+*&---------------------------------------------------------------------*
+CLASS report_cls_act IMPLEMENTATION.
+
+*===============抽象方法实现 部分 BEGIN===============*
+*&---------------------------------------------------------------------*
+*&  Title:构造函数
+*&  MethodName:CONSTRUCTOR
+*&  Description:初始化类
+*&  param:
+*&  return:
+*&  throws:
+*&---------------------------------------------------------------------*
+  METHOD constructor.
+    CALL METHOD super->constructor.
+    "当主数据位空的的情况下是否显示alv列表
+*    CALL METHOD SETIS_SHOW_NODATA
+*          EXPORTING is_show = ''.
+
+  ENDMETHOD.                    "CONSTRUCTOR
+
+
+*&---------------------------------------------------------------------*
+*&  Title:权限验证
+*&  MethodName:AUTH
+*&  Description:权限验证方法
+*&  param:
+*&  return:
+*&  throws:
+*&---------------------------------------------------------------------*
+  METHOD auth.
+*    AUTHORITY-CHECK OBJECT 'M_MATE_WRK'
+*      ID 'WERKS' FIELD sc_lifnr.
+*    IF  sy-subrc <> 0.
+*      MESSAGE 'No authorization' TYPE 'E'.
+*    ENDIF.
+  ENDMETHOD.                    "AUTH
+
+
+*&---------------------------------------------------------------------*
+*&  Title:获取主数据信息
+*&  MethodName:GTDATA
+*&  Description:获取主数据信息方法
+*&  param:
+*&  return:
+*&  throws:
+*&---------------------------------------------------------------------*
+  METHOD gtdata.
+*------定义变量、内表 部分 BEGIN------
+
+#Internal_Table#          
+
+    "内表索引
+    DATA lv_tabix LIKE sy-tabix.
+*------定义变量、内表 部分 END------
+
+*------获取数据 部分 BEGIN------
+    "获取主数据SQL
+*    SELECT
+*        *
+*      FROM lfa1 AS l
+*      INTO CORRESPONDING FIELDS OF TABLE gt_data
+*      WHERE lifnr IN sc_lifnr
+*      	.
+
+ #Internal_Get_Table#
+
+*------获取数据 部分 END------
+
+*------循环处理数据 部分 BEGIN------
+    "获取主表数据
+    LOOP AT gt_data INTO wa_data.
+      lv_tabix = sy-tabix.
+
+#Internal_Set_Table#
+    "处理数据前面的0
+*    PERFORM frm_delet_zero USING wa_data-lifnr  wa_data-lifnr.
+
+    "更新主数据
+      MODIFY gt_data FROM wa_data INDEX lv_tabix
+*        TRANSPORTING
+          .
+
+    ENDLOOP.
+*------循环处理数据 部分  END------
+
+    "把主数据赋予父类内表指针
+    ASSIGN gt_data[] TO <t_outtab>.
+
+  ENDMETHOD.                    "GTDATA
+
+
+*&---------------------------------------------------------------------*
+*&  Title:处理表头
+*&  MethodName:FIDCAT
+*&  Description:处理表头方法
+*&  param:  &1 wa_fieldcat-fieldname,
+*&          &2 wa_fieldcat-tabname, &2 wa_fieldcat-checkbox,
+*&          &3 wa_fieldcat-seltext_l,
+*&          &4 wa_fieldcat-ref_fieldname,
+*&          &5 wa_fieldcat-ref_tabname,
+*&          &6 wa_fieldcat-do_sum,
+*&          &7 wa_fieldcat-edit,
+*&          &8 wa_fieldcat-no_zero,
+*&          &9 wa_fieldcat-no_out.
+*&  return:
+*&  throws:
+*&---------------------------------------------------------------------*
+  METHOD fidcat.
+    "调用表头处理的宏定义，进行表头的初始化
+    fill_fieldcat:  'FLAG'   ''  '选择列' '' '' '' 'X' '' 'X'.
+#Fill_Fieldcat#
+  ENDMETHOD.                    "FIDCAT
+
+*===============抽象方法实现 部分 END===============*
+
+
+*===============重写方法实现 部分 BEGIN===============*
+
+*&---------------------------------------------------------------------*
+*&  Title:处理表头
+*&  MethodName:FIDCAT
+*&  Description:处理表头方法
+*&  param:
+*&  return:
+*&  throws:
+*&---------------------------------------------------------------------*
+*    METHOD DISPLAY.
+*        WRITE: / 'DISPLAY'.
+*    ENDMETHOD.
+
+
+*===============重写方法实现 部分 END===============*
+
+ENDCLASS.                    "REPORT_CLS_ACT IMPLEMENTATION 

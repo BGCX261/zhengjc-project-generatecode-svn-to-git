@@ -1,0 +1,6 @@
+Manifest-Version: 1.0
+X-COMMENT: Main-Class will be added automatically by build
+Main-Class: com.photop.sap.gc.MainJFrame
+Class-Path: lib/generateCode.jar
+Ant-Version: Apache Ant 1.7.1   
+Created-By: 16.0-b13 (Sun Microsystems Inc.)   
